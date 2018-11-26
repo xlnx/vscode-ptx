@@ -1,31 +1,311 @@
 {
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
 	"name": "PTX assembly",
-	"patterns": [
-		{
-			"include": "#keywords"
-		},
-		{
-			"include": "#strings"
-		}
-	],
+	"patterns": [{
+		"include": "#preprocessor-rules"
+	}, {
+		"include": "#comments"
+	}, {
+		"include": "#ptx-top-level"
+	}],
 	"repository": {
-		"keywords": {
+		"ptx-top-level": {
 			"patterns": [{
-				"name": "keyword.control.ptx",
-				"match": "\\b(if|while|for|return)\\b"
+				"include": "#function-declarations"
+			}, {
+				"include": "#blocks"
 			}]
 		},
-		"strings": {
-			"name": "string.quoted.double.ptx",
-			"begin": "\"",
-			"end": "\"",
-			"patterns": [
-				{
-					"name": "constant.character.escape.ptx",
-					"match": "\\\\."
+		"function-declarations": {
+			"comment": "Function declarations",
+			"match": "(\\.func\\b)(?:\\s*)(?:\\([^\\)]*\\))?(?:\\s*)(\\w+)",
+			"captures": {
+				"1": {
+					"name": "storage.type.function.ptx"
+				},
+				"2": {
+					"patterns": [{
+						"match": "\\d\\w*",
+						"name": "invalid.illigal.identifier.ptx"
+					}, {
+						"match": "\\w+",
+						"name": "support.function.ptx"
+					}]
 				}
-			]
+			}
+		},
+		"blocks": {
+			"comment": "Function bodies",
+			"begin": "{",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.bracket.begin.curly.ptx"
+				}
+			},
+			"end": "}",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.bracket.end.curly.ptx"
+				}
+			},
+			"patterns": [{
+				"include": "#statements"
+			}, {
+				"include": "#labels"
+			}, {
+				"include": "#comments"
+			}, {
+				"include": "#blocks"
+			}, {
+				"match": ";|:",
+				"name": "punctuation.semicolon.ptx"
+			}]
+		},
+		"labels": {
+			"match": "(\\w+)",
+			"name": "meta.label.ptx"
+		},
+		"statements": {
+			"patterns": [{
+				"include": "#instructions"
+			}, {
+				"include": "#directives"
+			}]
+		},
+		"instructions": {
+			"patterns": [{
+				"include": "#literals"
+			}, {
+				"include": "#identifiers"
+			}, {
+				"include": "#instruction-bodies"
+			}]
+		},
+		"instruction-bodies": {
+			"patterns": [{
+				"include": "#instruction-names"
+			}, {
+				"include": "#directive-names"
+			}, {
+				"include": "#state-spaces"
+			}, {
+				"include": "#type-specifiers"
+			}, {
+				"include": "#modifiers"
+			}, {
+				"include": "#operators"
+			}]
+		},
+		"instruction-names": {
+			"match": "\\b(?:abs|div|or|sin|vavrg2|vavrg4|add|ex2|pmevent|slct|vmad|addc|exit|popc|sqrt|vmax|and|fma|prefetch|st|vmax2|vmax4|atom|isspacep|prefetchu|sub|vmin|bar|ld|prmt|subc|vmin2|vmin4|bfe|ldu|rcp|suld|vote|bfi|lg2|red|suq|vset|bfind|mad|rem|sured|vset2|vset4|bra|mad24|ret|sust|vshl|brev|madc|rsqrt|testp|vshr|brkpt|max|sad|tex|vsub|call|membar|selp|tld4|vsub2|vsub4|clz|min|setp|trap|xor|cnot|mov|set|txq|copysign|mul|shf|vabsdiff|cos|mul|shfl|vabsdiff2|vabsdiff4|cvta|neg|shl|vadd|cvt|not|shr|vadd2|vadd4)\\b",
+			"captures": {
+				"0": {
+					"patterns": [{
+						"match": ""
+					}, {
+						"match": ".*",
+						"name": "keyword.control.instruction.ptx"
+					}]
+				}
+			}
+		},
+		"directive-names": {
+			"match": "\\b(?:address_size|file|minnctapersm|target|align|func|param|tex|branchtargets|global|pragma|version|callprototype|loc|reg|visible|calltargets|local|reqntid|weak|const|maxnctapersm|section|entry|maxnreg|shared|extern|maxntid|sreg)\\b",
+			"captures": {
+				"0": {
+					"patterns": [{
+						"match": ".*",
+						"name": "keyword.other.directive.ptx"
+					}]
+				}
+			}
+		},
+		"modifiers": {
+			"patterns": [{
+				"include": "#ftz-modifiers"
+			}, {
+				"include": "#round-modifiers"
+			}, {
+				"include": "#sat-modifiers"
+			}, {
+				"include": "#uni-modifiers"
+			}, {
+				"include": "#mul-modifiers"
+			}, {
+				"include": "#cvt-modifiers"
+			}]
+		},
+		"operators": {
+			"patterns": [{
+				"include": "#compare-operators"
+			}, {
+				"include": "#bool-operators"
+			}]
+		},
+		"compare-operators": {
+			"match": "\\.(?:eq|ne|lt|gt|ge|lo|ls|hi|hs|equ|neu|ltu|leu|gtu|geu|num|nan)",
+			"name": "support.operator.cmp.ptx"
+		},
+		"bool-operators": {
+			"match": "\\.(?:and|or|xor)",
+			"name": "support.operator.bool.ptx"
+		},
+		"ftz-modifiers": {
+			"match": "(?:\\.(approx|full|rnd))?\\.ftz",
+			"captures": {
+				"1": {
+					"patterns": [{
+						"match": ".*",
+						"name": "support.modifier.ftz.ptx"
+					}]
+				}
+			},
+			"name": "support.modifier.ftz.ptx"
+		},
+		"round-modifiers": {
+			"match": "\\.r[nzmp]i?",
+			"name": "support.modifier.round.ptx"
+		},
+		"sat-modifiers": {
+			"match": "\\.sat",
+			"name": "support.modifier.sat.ptx"
+		},
+		"uni-modifiers": {
+			"match": "\\.uni",
+			"name": "support.modifier.uni.ptx"
+		},
+		"mul-modifiers": {
+			"match": "\\.(?:hi|lo|wide)",
+			"name": "support.modifier.mul.ptx"
+		},
+		"cvt-modifiers": {
+			"match": "\\.to(?:\\.const)?",
+			"name": "support.modifier.cvt.ptx"
+		},
+		"literals": {
+			"patterns": [{
+				"include": "#integer-literals"
+			}, {
+				"include": "#floating-point-literals"
+			}]
+		},
+		"integer-literals": {
+			"match": "\\b(?:0[xX][0-9a-fA-F]+U?)|(?:0[0-7]+U?)|(?:0[bB][01]+U?)|(?:[1-9]\\d*U?)\\b",
+			"name": "constant.numeric.integer.ptx"
+		},
+		"floating-point-literals": {
+			"match": "\\b(?:0[fF][0-9a-fA-F]{8})|(?:0[dD][0-9a-fA-F]{16})\\b",
+			"name": "constant.numeric.float.ptx"
+		},
+		"state-spaces": {
+			"match": "\\.(?:s?reg|const|global|local|param|shared|tex)",
+			"captures": {
+				"0": {
+					"patterns": [{
+						"match": "\\.global",
+						"name": "invalid.deprecated.space.global.ptx"
+					}, {
+						"match": "\\.tex",
+						"name": "invalid.deprecated.space.tex.ptx"
+					}, {
+						"match": "\\.shared",
+						"name": "storage.space.shared.ptx"
+					}, {
+						"match": "\\.local",
+						"name": "storage.space.local.ptx"
+					}, {
+						"match": "\\.const",
+						"name": "storage.space.const.ptx"
+					}, {
+						"match": "\\.reg",
+						"name": "storage.space.reg.ptx"
+					}, {
+						"match": "\\.param",
+						"name": "storage.space.param.ptx"
+					}, {
+						"match": ".*",
+						"name": "storage.state.ptx"
+					}]
+				}
+			}
+		},
+		"type-specifiers": {
+			"match": "\\.(?:[sub](?:8|16|32|64)|f(?:16|16x2|32|64)|pred)",
+			"name": "meta.specifier.type.ptx"
+		},
+		"identifiers": {
+			"match": "%\\w+\\b",
+			"captures": {
+				"0": {
+					"patterns": [{
+						"match": "%\\d\\w*",
+						"name": "invalid.illigal.identifier.ptx"
+					}, {
+						"match": "%\\w+",
+						"name": "variable.identifier.ptx"
+					}]
+				}
+			}
+		},
+		"preprocessor-rules": {
+			"patterns": [{
+				"begin": "^\\s*((#)\\s*if\\b)(?=\\s*\\(*\\b0*1\\b\\)*\\s*(?:$|//|/\\*))",
+				"beginCaptures": {
+					"0": {
+						"name": "meta.preprocessor.ptx"
+					},
+					"1": {
+						"name": "keyword.control.directive.conditional.ptx"
+					},
+					"2": {
+						"name": "punctuation.definition.directive.ptx"
+					},
+					"3": {
+						"name": "constant.numeric.preprocessor.ptx"
+					}
+				},
+				"end": "^\\s*((#)\\s*endif\\b)",
+				"endCaptures": {
+					"0": {
+						"name": "meta.preprocessor.ptx"
+					},
+					"1": {
+						"name": "keyword.control.directive.conditional.ptx"
+					},
+					"2": {
+						"name": "punctuation.definition.directive.ptx"
+					}
+				}
+			}]
+		},
+		"comments": {
+			"patterns": [{
+				"begin": "/\\*\\*(?!/)",
+				"captures": {
+					"0": {
+						"name": "punctuation.definition.comment.ptx"
+					}
+				},
+				"end": "\\*/",
+				"name": "comment.block.documentation.ptx"
+			}, {
+				"begin": "/\\*",
+				"captures": {
+					"0": {
+						"name": "punctuation.definition.comment.ptx"
+					}
+				},
+				"end": "\\*/",
+				"name": "comment.block.ptx"
+			}, {
+				"captures": {
+					"1": {
+						"name": "punctuation.definition.comment.ptx"
+					}
+				},
+				"match": "(//).*$\\n?",
+				"name": "comment.line.double-slash.ptx"
+			}]
 		}
 	},
 	"scopeName": "source.ptx"
