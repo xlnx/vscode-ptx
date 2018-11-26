@@ -1,0 +1,26 @@
+{
+    "name": "vscode-ptx",
+    "displayName": "vscode-ptx",
+    "description": "nvidia ptx assembly support for vscode",
+    "version": "0.0.1",
+    "publisher": "KoishiChan",
+    "engines": {
+        "vscode": "^1.29.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "ptx",
+            "aliases": ["PTX assembly", "ptx"],
+            "extensions": [".ptx"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "ptx",
+            "scopeName": "source.ptx",
+            "path": "./syntaxes/ptx.tmLanguage.json"
+        }]
+    }
+}
